@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GlowAI — AI Makeup Platform</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fdf6f0; color: #2d1a0e; min-height: 100vh; }
+
+  .header { background: #fff; border-bottom: 1px solid #f0e0d0; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+  .logo { font-size: 22px; font-weight: 700; color: #c2603a; letter-spacing: -0.5px; }
+  .logo span { color: #2d1a0e; }
+  .tagline { font-size: 13px; color: #7a5c4a; margin-left: auto; }
+
+  .hero { text-align: center; padding: 40px 24px 24px; }
+  .hero h1 { font-size: 28px; font-weight: 700; color: #2d1a0e; margin-bottom: 8px; }
+  .hero p { font-size: 15px; color: #7a5c4a; max-width: 480px; margin: 0 auto; }
+
+  .tabs { display: flex; gap: 8px; justify-content: center; padding: 20px 24px 0; }
+  .tab { padding: 10px 24px; border-radius: 30px; border: 2px solid #e8cfc0; background: #fff; font-size: 14px; font-weight: 600; cursor: pointer; color: #7a5c4a; transition: all 0.2s; }
+  .tab.active { background: #c2603a; border-color: #c2603a; color: #fff; }
+
+  .container { max-width: 720px; margin: 0 auto; padding: 24px; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .camera-area { background: #fff; border-radius: 20px; border: 2px dashed #e8cfc0; padding: 32px; text-align: center; margin-bottom: 20px; position: relative; overflow: hidden; }
+  .camera-icon { font-size: 48px; margin-bottom: 12px; }
+  .camera-area h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+  .camera-area p { font-size: 13px; color: #7a5c4a; margin-bottom: 20px; }
+  .btn-capture { background: #c2603a; color: #fff; border: none; border-radius: 30px; padding: 12px 28px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+  .btn-capture:hover { background: #a84e2e; }
+  .btn-secondary { background: #fff; color: #c2603a; border: 2px solid #c2603a; border-radius: 30px; padding: 10px 24px; font-size: 14px; font-weight: 600; cursor: pointer; margin-left: 10px; transition: all 0.2s; }
+
+  .face-preview { width: 160px; height: 160px; border-radius: 50%; object-fit: cover; border: 4px solid #c2603a; margin: 0 auto 16px; display: block; background: #f5e0d0; }
+  .face-placeholder { width: 160px; height: 160px; border-radius: 50%; background: linear-gradient(135deg, #f5e0d0, #ead5c0); margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 60px; border: 4px solid #e8cfc0; }
+
+  .section-label { font-size: 13px; font-weight: 700; color: #7a5c4a; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+
+  .occasion-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+  .occasion-card { background: #fff; border: 2px solid #e8cfc0; border-radius: 14px; padding: 14px 10px; text-align: center; cursor: pointer; transition: all 0.2s; }
+  .occasion-card:hover { border-color: #c2603a; }
+  .occasion-card.selected { border-color: #c2603a; background: #fdf0eb; }
+  .occasion-card .emoji { font-size: 24px; display: block; margin-bottom: 6px; }
+  .occasion-card span { font-size: 12px; font-weight: 600; color: #2d1a0e; }
+
+  .analyse-btn { width: 100%; background: #c2603a; color: #fff; border: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 700; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
+  .analyse-btn:hover { background: #a84e2e; }
+  .analyse-btn:disabled { background: #d4b8aa; cursor: not-allowed; }
+
+  .results { background: #fff; border-radius: 20px; border: 1px solid #f0e0d0; padding: 24px; margin-top: 20px; }
+  .results h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  .results .subtitle { font-size: 13px; color: #7a5c4a; margin-bottom: 20px; }
+
+  .analysis-summary { background: #fdf0eb; border-radius: 12px; padding: 16px; margin-bottom: 20px; font-size: 14px; line-height: 1.6; color: #5a3826; border-left: 4px solid #c2603a; }
+
+  .skin-badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+  .badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .badge.good { background: #e8f5e9; color: #2e7d32; }
+  .badge.concern { background: #fff3e0; color: #e65100; }
+  .badge.neutral { background: #e8f4fd; color: #0277bd; }
+
+  .products-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .product-card { border: 1px solid #f0e0d0; border-radius: 14px; overflow: hidden; cursor: pointer; transition: all 0.2s; }
+  .product-card:hover { border-color: #c2603a; box-shadow: 0 4px 16px rgba(194,96,58,0.12); }
+  .product-img { width: 100%; height: 100px; object-fit: cover; background: linear-gradient(135deg, #f5e0d0, #ead5c0); display: flex; align-items: center; justify-content: center; font-size: 32px; }
+  .product-info { padding: 12px; }
+  .product-name { font-size: 13px; font-weight: 700; color: #2d1a0e; margin-bottom: 2px; }
+  .product-brand { font-size: 11px; color: #7a5c4a; margin-bottom: 6px; }
+  .product-footer { display: flex; align-items: center; justify-content: space-between; }
+  .product-price { font-size: 14px; font-weight: 700; color: #c2603a; }
+  .product-rating { font-size: 11px; color: #7a5c4a; }
+  .why-tag { display: inline-block; font-size: 10px; background: #fdf0eb; color: #c2603a; border-radius: 6px; padding: 2px 8px; margin-top: 6px; font-weight: 600; }
+
+  .loading { text-align: center; padding: 32px; }
+  .spinner { width: 40px; height: 40px; border: 3px solid #f0e0d0; border-top-color: #c2603a; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading p { color: #7a5c4a; font-size: 14px; }
+
+  .step-indicator { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+  .step { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #7a5c4a; }
+  .step.done { color: #c2603a; }
+  .step.active { color: #2d1a0e; font-weight: 600; }
+  .step-dot { width: 20px; height: 20px; border-radius: 50%; background: #f0e0d0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+  .step.done .step-dot { background: #c2603a; color: #fff; }
+  .step.active .step-dot { background: #2d1a0e; color: #fff; }
+  .step-line { flex: 1; height: 1px; background: #e8cfc0; }
+
+  video { width: 100%; border-radius: 14px; display: none; }
+  canvas { display: none; }
+
+  .note { background: #fff8f0; border: 1px solid #f0d8c0; border-radius: 10px; padding: 12px 16px; font-size: 12px; color: #7a5c4a; margin-top: 16px; line-height: 1.5; }
+  .note strong { color: #c2603a; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Glow<span>AI</span></div>
+  <div class="tagline">Powered by Claude Vision AI</div>
+</div>
+
+<div class="hero">
+  <h1>Your AI beauty advisor</h1>
+  <p>Scan your face and get personalised makeup and skincare recommendations in seconds</p>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('look')">✨ Look recommender</button>
+  <button class="tab" onclick="switchTab('skin')">🔬 Skin analyser</button>
+</div>
+
+<!-- USE CASE 1: LOOK RECOMMENDER -->
+<div class="container">
+<div id="panel-look" class="panel active">
+
+  <div class="step-indicator">
+    <div class="step done" id="step1-1"><div class="step-dot">1</div> Scan</div>
+    <div class="step-line"></div>
+    <div class="step active" id="step1-2"><div class="step-dot">2</div> Choose look</div>
+    <div class="step-line"></div>
+    <div class="step" id="step1-3"><div class="step-dot">3</div> Get picks</div>
+  </div>
+
+  <div class="camera-area" id="cam-area-look">
+    <div class="face-placeholder" id="face-placeholder-look">😊</div>
+    <video id="video-look" autoplay playsinline></video>
+    <canvas id="canvas-look"></canvas>
+    <h3 id="cam-title-look">Scan your face</h3>
+    <p id="cam-desc-look">Allow camera access and take a quick selfie so AI can analyse your features and skin tone</p>
+    <button class="btn-capture" onclick="startCamera('look')" id="cam-btn-look">Open camera</button>
+    <button class="btn-secondary" onclick="useSample('look')" id="sample-btn-look">Use sample photo</button>
+  </div>
+
+  <div id="occasion-section" style="display:none">
+    <p class="section-label">What's the occasion?</p>
+    <div class="occasion-grid">
+      <div class="occasion-card selected" onclick="selectOccasion(this,'Everyday natural')" data-val="Everyday natural"><span class="emoji">☀️</span><span>Everyday natural</span></div>
+      <div class="occasion-card" onclick="selectOccasion(this,'Office/work')" data-val="Office/work"><span class="emoji">💼</span><span>Office / work</span></div>
+      <div class="occasion-card" onclick="selectOccasion(this,'Date night')" data-val="Date night"><span class="emoji">🌙</span><span>Date night</span></div>
+      <div class="occasion-card" onclick="selectOccasion(this,'Wedding/formal')" data-val="Wedding/formal"><span class="emoji">💍</span><span>Wedding / formal</span></div>
+      <div class="occasion-card" onclick="selectOccasion(this,'Festival/party')" data-val="Festival/party"><span class="emoji">🎉</span><span>Festival / party</span></div>
+      <div class="occasion-card" onclick="selectOccasion(this,'Editorial/bold')" data-val="Editorial/bold"><span class="emoji">📸</span><span>Editorial / bold</span></div>
+    </div>
+    <button class="analyse-btn" onclick="getRecommendations('look')">✨ Get my look recommendations →</button>
+  </div>
+
+  <div id="look-results" style="display:none"></div>
+</div>
+
+<!-- USE CASE 2: SKIN ANALYSER -->
+<div id="panel-skin" class="panel">
+
+  <div class="step-indicator">
+    <div class="step done" id="step2-1"><div class="step-dot">1</div> Scan</div>
+    <div class="step-line"></div>
+    <div class="step active" id="step2-2"><div class="step-dot">2</div> Analyse</div>
+    <div class="step-line"></div>
+    <div class="step" id="step2-3"><div class="step-dot">3</div> Solutions</div>
+  </div>
+
+  <div class="camera-area" id="cam-area-skin">
+    <div class="face-placeholder" id="face-placeholder-skin">😊</div>
+    <video id="video-skin" autoplay playsinline></video>
+    <canvas id="canvas-skin"></canvas>
+    <h3 id="cam-title-skin">Scan your skin</h3>
+    <p id="cam-desc-skin">Face good lighting — natural daylight works best. AI will check for common skin concerns</p>
+    <button class="btn-capture" onclick="startCamera('skin')" id="cam-btn-skin">Open camera</button>
+    <button class="btn-secondary" onclick="useSample('skin')" id="sample-btn-skin">Use sample photo</button>
+  </div>
+
+  <div id="skin-analyse-btn-area" style="display:none">
+    <button class="analyse-btn" onclick="getRecommendations('skin')">🔬 Analyse my skin →</button>
+  </div>
+
+  <div id="skin-results" style="display:none"></div>
+</div>
+</div>
+
+<script>
+let selectedOccasion = 'Everyday natural';
+let photoTaken = { look: false, skin: false };
+let streams = {};
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['look','skin'][i] === tab));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+function selectOccasion(el, val) {
+  document.querySelectorAll('.occasion-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedOccasion = val;
+}
+
+async function startCamera(mode) {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+    streams[mode] = stream;
+    const video = document.getElementById('video-'+mode);
+    video.srcObject = stream;
+    video.style.display = 'block';
+    document.getElementById('face-placeholder-'+mode).style.display = 'none';
+    document.getElementById('cam-title-'+mode).textContent = 'Position your face in the centre';
+    document.getElementById('cam-desc-'+mode).textContent = 'Make sure your face is well lit';
+    document.getElementById('cam-btn-'+mode).textContent = '📸 Take photo';
+    document.getElementById('cam-btn-'+mode).onclick = () => capturePhoto(mode);
+  } catch(e) {
+    alert('Camera not available. Please use the sample photo option.');
+  }
+}
+
+function capturePhoto(mode) {
+  const video = document.getElementById('video-'+mode);
+  const canvas = document.getElementById('canvas-'+mode);
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  if (streams[mode]) { streams[mode].getTracks().forEach(t => t.stop()); }
+  video.style.display = 'none';
+  const ph = document.getElementById('face-placeholder-'+mode);
+  ph.style.display = 'flex';
+  ph.textContent = '✅';
+  document.getElementById('cam-title-'+mode).textContent = 'Photo captured!';
+  document.getElementById('cam-desc-'+mode).textContent = 'Great! Now select your options below.';
+  document.getElementById('cam-btn-'+mode).style.display = 'none';
+  document.getElementById('sample-btn-'+mode).textContent = 'Retake photo';
+  document.getElementById('sample-btn-'+mode).onclick = () => resetCamera(mode);
+  photoTaken[mode] = true;
+  showNextStep(mode);
+}
+
+function useSample(mode) {
+  const ph = document.getElementById('face-placeholder-'+mode);
+  ph.style.display = 'flex';
+  ph.textContent = '🤳';
+  document.getElementById('cam-title-'+mode).textContent = 'Sample face loaded';
+  document.getElementById('cam-desc-'+mode).textContent = 'Using a sample for demonstration purposes.';
+  document.getElementById('cam-btn-'+mode).style.display = 'none';
+  document.getElementById('sample-btn-'+mode).textContent = 'Reset';
+  document.getElementById('sample-btn-'+mode).onclick = () => resetCamera(mode);
+  photoTaken[mode] = true;
+  showNextStep(mode);
+}
+
+function showNextStep(mode) {
+  if (mode === 'look') {
+    document.getElementById('occasion-section').style.display = 'block';
+  } else {
+    document.getElementById('skin-analyse-btn-area').style.display = 'block';
+  }
+}
+
+function resetCamera(mode) {
+  photoTaken[mode] = false;
+  document.getElementById('face-placeholder-'+mode).textContent = '😊';
+  document.getElementById('face-placeholder-'+mode).style.display = 'flex';
+  document.getElementById('cam-title-'+mode).textContent = mode === 'look' ? 'Scan your face' : 'Scan your skin';
+  document.getElementById('cam-desc-'+mode).textContent = 'Allow camera access and take a quick selfie.';
+  document.getElementById('cam-btn-'+mode).textContent = 'Open camera';
+  document.getElementById('cam-btn-'+mode).onclick = () => startCamera(mode);
+  document.getElementById('cam-btn-'+mode).style.display = 'inline-block';
+  document.getElementById('sample-btn-'+mode).textContent = 'Use sample photo';
+  document.getElementById('sample-btn-'+mode).onclick = () => useSample(mode);
+  if (mode === 'look') { document.getElementById('occasion-section').style.display = 'none'; document.getElementById('look-results').style.display = 'none'; }
+  else { document.getElementById('skin-analyse-btn-area').style.display = 'none'; document.getElementById('skin-results').style.display = 'none'; }
+}
+
+async function getRecommendations(mode) {
+  const resultsEl = document.getElementById(mode+'-results');
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML = `<div class="loading"><div class="spinner"></div><p>AI is analysing your ${mode === 'look' ? 'features and selecting the perfect look' : 'skin and identifying concerns'}…</p></div>`;
+
+  const prompt = mode === 'look'
+    ? `You are a professional makeup artist AI. The user has scanned their face and selected the occasion: "${selectedOccasion}".
+       
+       Based on general warm Indian skin tones (medium-to-deep, olive undertone) which is the most common for Indian users, create a detailed makeup recommendation. Respond in JSON only, no markdown, no preamble:
+       {
+         "analysis": "2-sentence description of the detected features and skin tone",
+         "look_name": "name of the recommended look",
+         "products": [
+           { "emoji": "💄", "name": "product name", "brand": "brand name", "price": "₹XXX", "rating": "4.5 ⭐", "why": "one short reason specific to occasion" },
+           { "emoji": "🌸", "name": "product name", "brand": "brand name", "price": "₹XXX", "rating": "4.7 ⭐", "why": "one short reason" },
+           { "emoji": "✨", "name": "product name", "brand": "brand name", "price": "₹XXX", "rating": "4.4 ⭐", "why": "one short reason" },
+           { "emoji": "👁️", "name": "product name", "brand": "brand name", "price": "₹XXX", "rating": "4.6 ⭐", "why": "one short reason" }
+         ]
+       }
+       Include real Indian or globally available brands at Indian price points. Make it specific to ${selectedOccasion}.`
+    : `You are a professional skincare and dermatology AI assistant. The user has scanned their face for skin analysis.
+       
+       Based on common skin concerns for Indian skin types (medium-deep, melanin-rich, prone to hyperpigmentation and oiliness), provide analysis and product recommendations. Respond in JSON only, no markdown, no preamble:
+       {
+         "analysis": "2-sentence overall skin health summary",
+         "concerns": [
+           { "name": "concern name", "severity": "mild/moderate/significant", "type": "concern" },
+           { "name": "strength name", "type": "good" },
+           { "name": "another concern", "type": "concern" },
+           { "name": "another good trait", "type": "good" }
+         ],
+         "products": [
+           { "emoji": "🧴", "name": "product name", "brand": "brand", "price": "₹XXX", "rating": "4.5 ⭐", "why": "why this addresses the concern" },
+           { "emoji": "☀️", "name": "product name", "brand": "brand", "price": "₹XXX", "rating": "4.8 ⭐", "why": "why this helps" },
+           { "emoji": "💧", "name": "product name", "brand": "brand", "price": "₹XXX", "rating": "4.3 ⭐", "why": "why this helps" },
+           { "emoji": "✨", "name": "product name", "brand": "brand", "price": "₹XXX", "rating": "4.6 ⭐", "why": "why this helps" }
+         ]
+       }
+       Include real brands available in India (Minimalist, Dot & Key, Mamaearth, Biotique, L'Oreal, Lakme, Plum, etc).`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": "YOUR_API_KEY_HERE",
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content.map(i => i.text || '').join('');
+    const clean = text.replace(/```json|```/g, '').trim();
+    const result = JSON.parse(clean);
+    renderResults(mode, result);
+  } catch(e) {
+    resultsEl.innerHTML = renderFallback(mode);
+  }
+}
+
+function renderResults(mode, result) {
+  const el = document.getElementById(mode+'-results');
+  let html = `<div class="results">`;
+  if (mode === 'look') {
+    html += `<h3>Your look: ${result.look_name}</h3>
+             <p class="subtitle">Based on your facial features and the "${selectedOccasion}" occasion</p>
+             <div class="analysis-summary">${result.analysis}</div>
+             <p class="section-label">Recommended products</p>
+             <div class="products-grid">`;
+    result.products.forEach(p => {
+      html += `<div class="product-card">
+        <div class="product-img">${p.emoji}</div>
+        <div class="product-info">
+          <div class="product-name">${p.name}</div>
+          <div class="product-brand">${p.brand}</div>
+          <div class="product-footer">
+            <span class="product-price">${p.price}</span>
+            <span class="product-rating">${p.rating}</span>
+          </div>
+          <div class="why-tag">✓ ${p.why}</div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  } else {
+    html += `<h3>Your skin report</h3>
+             <p class="subtitle">Based on AI analysis of your face scan</p>
+             <div class="analysis-summary">${result.analysis}</div>
+             <p class="section-label">Skin profile</p>
+             <div class="skin-badges">`;
+    result.concerns.forEach(c => {
+      const cls = c.type === 'good' ? 'good' : 'concern';
+      html += `<span class="badge ${cls}">${c.name}</span>`;
+    });
+    html += `</div>
+             <p class="section-label" style="margin-top:16px">Recommended products</p>
+             <div class="products-grid">`;
+    result.products.forEach(p => {
+      html += `<div class="product-card">
+        <div class="product-img">${p.emoji}</div>
+        <div class="product-info">
+          <div class="product-name">${p.name}</div>
+          <div class="product-brand">${p.brand}</div>
+          <div class="product-footer">
+            <span class="product-price">${p.price}</span>
+            <span class="product-rating">${p.rating}</span>
+          </div>
+          <div class="why-tag">✓ ${p.why}</div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  html += `<div class="note"><strong>Note:</strong> These are AI-generated suggestions. Always patch-test new products. For serious skin concerns, please consult a dermatologist.</div>`;
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
+function renderFallback(mode) {
+  if (mode === 'look') {
+    return `<div class="results">
+      <h3>Your look: Dewy rose glam</h3>
+      <p class="subtitle">Based on your features and "${selectedOccasion}"</p>
+      <div class="analysis-summary">Your warm medium-deep skin tone with subtle golden undertones suits rich, warm pigments beautifully. For ${selectedOccasion}, a dewy finish with berry tones will be stunning.</div>
+      <p class="section-label">Recommended products</p>
+      <div class="products-grid">
+        <div class="product-card"><div class="product-img">💄</div><div class="product-info"><div class="product-name">Matte Revolution Lipstick</div><div class="product-brand">Charlotte Tilbury</div><div class="product-footer"><span class="product-price">₹3,800</span><span class="product-rating">4.7 ⭐</span></div><div class="why-tag">✓ Perfect for ${selectedOccasion}</div></div></div>
+        <div class="product-card"><div class="product-img">🌸</div><div class="product-info"><div class="product-name">Skin Tint SPF 30</div><div class="product-brand">Lakme 9to5</div><div class="product-footer"><span class="product-price">₹599</span><span class="product-rating">4.4 ⭐</span></div><div class="why-tag">✓ Dewy finish for warm tones</div></div></div>
+        <div class="product-card"><div class="product-img">✨</div><div class="product-info"><div class="product-name">Highlighter — Rose Gold</div><div class="product-brand">NYX Cosmetics</div><div class="product-footer"><span class="product-price">₹1,100</span><span class="product-rating">4.5 ⭐</span></div><div class="why-tag">✓ Enhances golden undertones</div></div></div>
+        <div class="product-card"><div class="product-img">👁️</div><div class="product-info"><div class="product-name">Kajal Kohl Eyeliner</div><div class="product-brand">Plum</div><div class="product-footer"><span class="product-price">₹399</span><span class="product-rating">4.6 ⭐</span></div><div class="why-tag">✓ Defines eyes without heaviness</div></div></div>
+      </div>
+      <div class="note"><strong>Note:</strong> Demo mode — connect your Claude API key to get real AI-powered personalised recommendations.</div>
+    </div>`;
+  } else {
+    return `<div class="results">
+      <h3>Your skin report</h3>
+      <div class="analysis-summary">Your skin shows signs of mild to moderate hyperpigmentation, which is very common in Indian skin tones. The T-zone appears oilier while cheeks may be slightly dry — a combination skin type.</div>
+      <p class="section-label">Skin profile</p>
+      <div class="skin-badges">
+        <span class="badge concern">Hyperpigmentation</span>
+        <span class="badge concern">T-zone oiliness</span>
+        <span class="badge good">Good texture</span>
+        <span class="badge neutral">Combination skin</span>
+        <span class="badge good">Hydrated cheeks</span>
+      </div>
+      <p class="section-label" style="margin-top:16px">Recommended products</p>
+      <div class="products-grid">
+        <div class="product-card"><div class="product-img">🧴</div><div class="product-info"><div class="product-name">10% Niacinamide + Zinc Serum</div><div class="product-brand">Minimalist</div><div class="product-footer"><span class="product-price">₹599</span><span class="product-rating">4.8 ⭐</span></div><div class="why-tag">✓ Reduces pigmentation & oil</div></div></div>
+        <div class="product-card"><div class="product-img">☀️</div><div class="product-info"><div class="product-name">Invisible Sunscreen SPF 60</div><div class="product-brand">Dot & Key</div><div class="product-footer"><span class="product-price">₹699</span><span class="product-rating">4.6 ⭐</span></div><div class="why-tag">✓ Prevents further pigmentation</div></div></div>
+        <div class="product-card"><div class="product-img">💧</div><div class="product-info"><div class="product-name">Hydrating Gel Moisturiser</div><div class="product-brand">Plum</div><div class="product-footer"><span class="product-price">₹449</span><span class="product-rating">4.5 ⭐</span></div><div class="why-tag">✓ Light enough for oily zones</div></div></div>
+        <div class="product-card"><div class="product-img">✨</div><div class="product-info"><div class="product-name">Alpha Arbutin 2% Serum</div><div class="product-brand">Minimalist</div><div class="product-footer"><span class="product-price">₹449</span><span class="product-rating">4.7 ⭐</span></div><div class="why-tag">✓ Targets dark spots</div></div></div>
+      </div>
+      <div class="note"><strong>Note:</strong> Demo mode — connect your Claude API key to get real AI-powered personalised skin analysis.</div>
+    </div>`;
+  }
+}
+</script>
+</body>
+</html>
